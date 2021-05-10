@@ -22,7 +22,7 @@ class Indexing(Benchmark):
               'indexes_rand_': get_indexes_rand_()}
 
         code = "def run():\n    for a in squares_.values(): a[%s]%s"
-        code = code % (sel, op)
+        code %= (sel, op)
 
         exec(code, ns)
         self.func = ns['run']
@@ -42,23 +42,21 @@ class ScalarIndexing(Benchmark):
         # time indexing.
         arr = self.array
         indx = (1,) * ndim
-        for i in range(100):
+        for _ in range(100):
             arr[indx]
 
     def time_assign(self, ndim):
         # time assignment from a python scalar
         arr = self.array
         indx = (1,) * ndim
-        for i in range(100):
-            arr[indx] = 5.
+        arr[indx] = 5.
 
     def time_assign_cast(self, ndim):
         # time an assignment which may use a cast operation
         arr = self.array
         indx = (1,) * ndim
         val = np.int16(43)
-        for i in range(100):
-            arr[indx] = val
+        arr[indx] = val
 
 
 class IndexingSeparate(Benchmark):
@@ -73,11 +71,11 @@ class IndexingSeparate(Benchmark):
         shutil.rmtree(self.tmp_dir)
 
     def time_mmap_slicing(self):
-        for i in range(1000):
+        for _ in range(1000):
             self.fp[5:10]
 
     def time_mmap_fancy_indexing(self):
-        for i in range(1000):
+        for _ in range(1000):
             self.fp[self.indexes]
 
 

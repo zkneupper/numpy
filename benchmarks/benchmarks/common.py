@@ -41,8 +41,7 @@ def memoize(func):
 @memoize
 def get_values():
     rnd = numpy.random.RandomState(1)
-    values = numpy.tile(rnd.uniform(0, 100, size=nx*ny//10), 10)
-    return values
+    return numpy.tile(rnd.uniform(0, 100, size=nx*ny//10), 10)
 
 
 @memoize
@@ -99,15 +98,13 @@ def get_indexes_rand():
 def get_indexes_():
     # smaller versions
     indexes = get_indexes()
-    indexes_ = indexes[indexes < nxs]
-    return indexes_
+    return indexes[indexes < nxs]
 
 
 @memoize
 def get_indexes_rand_():
     indexes_rand = get_indexes_rand()
-    indexes_rand_ = indexes_rand[indexes_rand < nxs]
-    return indexes_rand_
+    return indexes_rand[indexes_rand < nxs]
 
 
 class Benchmark:

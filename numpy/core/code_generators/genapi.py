@@ -115,16 +115,13 @@ class Function:
             return typename + ' ' + name
 
     def __str__(self):
-        argstr = ', '.join([self._format_arg(*a) for a in self.args])
-        if self.doc:
-            doccomment = '/* %s */\n' % self.doc
-        else:
-            doccomment = ''
+        argstr = ', '.join(self._format_arg(*a) for a in self.args)
+        doccomment = '/* %s */\n' % self.doc if self.doc else ''
         return '%s%s %s(%s)' % (doccomment, self.return_type, self.name, argstr)
 
     def to_ReST(self):
         lines = ['::', '', '  ' + self.return_type]
-        argstr = ',\000'.join([self._format_arg(*a) for a in self.args])
+        argstr = ',\000'.join(self._format_arg(*a) for a in self.args)
         name = '  %s' % (self.name,)
         s = textwrap.wrap('(%s)' % (argstr,), width=72,
                           initial_indent=name,
@@ -238,10 +235,7 @@ def find_functions(filename, tag='API'):
             line = line.strip()
             if state == SCANNING:
                 if line.startswith(tagcomment):
-                    if line.endswith('*/'):
-                        state = STATE_RETTYPE
-                    else:
-                        state = STATE_DOC
+                    state = STATE_RETTYPE if line.endswith('*/') else STATE_DOC
             elif state == STATE_DOC:
                 if line.startswith('*/'):
                     state = STATE_RETTYPE
@@ -295,9 +289,7 @@ def should_rebuild(targets, source_files):
         if not os.path.exists(t):
             return True
     sources = API_FILES + list(source_files) + [__file__]
-    if newer_group(sources, targets[0], missing='newer'):
-        return True
-    return False
+    return bool(newer_group(sources, targets[0], missing='newer'))
 
 def write_file(filename, data):
     """
@@ -365,10 +357,12 @@ class GlobalVarApi:
         return "        (%s *) &%s" % (self.type, self.name)
 
     def internal_define(self):
-        astr = """\
+        return """\
 extern NPY_NO_EXPORT %(type)s %(name)s;
-""" % {'type': self.type, 'name': self.name}
-        return astr
+""" % {
+            'type': self.type,
+            'name': self.name,
+        }
 
 # Dummy to be able to consistently use *Api instances for all items in the
 # array api
@@ -389,10 +383,9 @@ class BoolValuesApi:
         return "        (void *) &%s" % self.name
 
     def internal_define(self):
-        astr = """\
+        return """\
 extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 """
-        return astr
 
 class FunctionApi:
     def __init__(self, name, index, annotations, return_type, args, api_name):
@@ -406,18 +399,21 @@ class FunctionApi:
     def _argtypes_string(self):
         if not self.args:
             return 'void'
-        argstr = ', '.join([_repl(a[0]) for a in self.args])
-        return argstr
+        return ', '.join(_repl(a[0]) for a in self.args)
 
     def define_from_array_api_string(self):
-        define = """\
+        return (
+            """\
 #define %s \\\n        (*(%s (*)(%s)) \\
-         %s[%d])""" % (self.name,
-                                self.return_type,
-                                self._argtypes_string(),
-                                self.api_name,
-                                self.index)
-        return define
+         %s[%d])"""
+            % (
+                self.name,
+                self.return_type,
+                self._argtypes_string(),
+                self.api_name,
+                self.index,
+            )
+        )
 
     def array_api_define(self):
         return "        (void *) %s" % self.name
@@ -425,11 +421,13 @@ class FunctionApi:
     def internal_define(self):
         annstr = [str(a) for a in self.annotations]
         annstr = ' '.join(annstr)
-        astr = """\
-NPY_NO_EXPORT %s %s %s \\\n       (%s);""" % (annstr, self.return_type,
-                                              self.name,
-                                              self._argtypes_string())
-        return astr
+        return """\
+NPY_NO_EXPORT %s %s %s \\\n       (%s);""" % (
+            annstr,
+            self.return_type,
+            self.name,
+            self._argtypes_string(),
+        )
 
 def order_dict(d):
     """Order dict by its values."""
@@ -455,7 +453,7 @@ def check_api_dict(d):
     # become keys. If the length is different, it means one index has been used
     # at least twice
     revert_dict = {v: k for k, v in index_d.items()}
-    if not len(revert_dict) == len(index_d):
+    if len(revert_dict) != len(index_d):
         # We compute a dict index -> list of associated items
         doubled = {}
         for name, index in index_d.items():

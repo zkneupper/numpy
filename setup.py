@@ -195,9 +195,7 @@ def get_build_overrides():
         out = subprocess.run([cc, '-dumpversion'], stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE, universal_newlines=True)
         # -std=c99 is default from this version on
-        if LooseVersion(out.stdout) >= LooseVersion('5.0'):
-            return False
-        return True
+        return LooseVersion(out.stdout) < LooseVersion('5.0')
 
     class new_build_clib(build_clib):
         def build_a_library(self, build_info, lib_name, libraries):
@@ -209,9 +207,8 @@ def get_build_overrides():
 
     class new_build_ext(build_ext):
         def build_extension(self, ext):
-            if _needs_gcc_c99_flag(self):
-                if '-std=c99' not in ext.extra_compile_args:
-                    ext.extra_compile_args.append('-std=c99')
+            if _needs_gcc_c99_flag(self) and '-std=c99' not in ext.extra_compile_args:
+                ext.extra_compile_args.append('-std=c99')
             build_ext.build_extension(self, ext)
     return new_build_clib, new_build_ext
 
@@ -331,11 +328,16 @@ def parse_setuppy_commands():
                     'install_lib', 'install_scripts', ):
         bad_commands[command] = "`setup.py %s` is not supported" % command
 
-    for command in bad_commands.keys():
+    for command, value in bad_commands.items():
         if command in args:
-            print(textwrap.dedent(bad_commands[command]) +
-                  "\nAdd `--force` to your command to use it anyway if you "
-                  "must (unsupported).\n")
+            print(
+                (
+                    textwrap.dedent(value)
+                    + "\nAdd `--force` to your command to use it anyway if you "
+                    "must (unsupported).\n"
+                )
+            )
+
             sys.exit(1)
 
     # Commands that do more than print info, but also don't need Cython and

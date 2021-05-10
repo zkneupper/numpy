@@ -34,7 +34,7 @@ class LaplaceInplace(Benchmark):
         def laplace(N, Niter=100, func=num_update, args=()):
             u = np.zeros([N, N], order='C')
             u[0] = 1
-            for i in range(Niter):
+            for _ in range(Niter):
                 func(u, *args)
             return u
 

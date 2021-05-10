@@ -41,7 +41,7 @@ def _show_numpy_info():
     relaxed_strides = np.ones((10, 1), order="C").flags.f_contiguous
     print("NumPy relaxed strides checking option:", relaxed_strides)
     info = np.lib.utils._opt_info()
-    print("NumPy CPU features: ", (info if info else 'nothing enabled'))
+    print("NumPy CPU features: ", info or 'nothing enabled')
 
 
 

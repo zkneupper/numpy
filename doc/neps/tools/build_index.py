@@ -18,7 +18,7 @@ def render(tpl_path, context):
 def nep_metadata():
     ignore = ('nep-template.rst')
     sources = sorted(glob.glob(r'nep-*.rst'))
-    sources = [s for s in sources if not s in ignore]
+    sources = [s for s in sources if s not in ignore]
 
     meta_re = r':([a-zA-Z\-]*): (.*)'
 
@@ -53,12 +53,14 @@ def nep_metadata():
                 '(note that — here is a special, enlongated dash). Got: '
                 f'    {tags["Title"]!r}')
 
-        if tags['Status'] in ('Accepted', 'Rejected', 'Withdrawn'):
-            if not 'Resolution' in tags:
-                raise RuntimeError(
-                    f'NEP {nr} is Accepted/Rejected/Withdrawn but '
-                    'has no Resolution tag'
-                )
+        if (
+            tags['Status'] in ('Accepted', 'Rejected', 'Withdrawn')
+            and 'Resolution' not in tags
+        ):
+            raise RuntimeError(
+                f'NEP {nr} is Accepted/Rejected/Withdrawn but '
+                'has no Resolution tag'
+            )
         if tags['Status'] == 'Provisional':
             has_provisional = True
 
@@ -69,7 +71,7 @@ def nep_metadata():
 
     for nr, tags in neps.items():
         if tags['Status'] == 'Superseded':
-            if not 'Replaced-By' in tags:
+            if 'Replaced-By' not in tags:
                 raise RuntimeError(
                     f'NEP {nr} has been Superseded, but has no Replaced-By tag'
                 )
@@ -77,13 +79,13 @@ def nep_metadata():
             replaced_by = int(tags['Replaced-By'])
             replacement_nep = neps[replaced_by]
 
-            if not 'Replaces' in replacement_nep:
+            if 'Replaces' not in replacement_nep:
                 raise RuntimeError(
                     f'NEP {nr} is superseded by {replaced_by}, but that NEP has '
                     f"no Replaces tag."
                 )
 
-            if not int(replacement_nep['Replaces']) == nr:
+            if int(replacement_nep['Replaces']) != nr:
                 raise RuntimeError(
                     f'NEP {nr} is superseded by {replaced_by}, but that NEP has a '
                     f"Replaces tag of `{replacement_nep['Replaces']}`."
@@ -92,7 +94,7 @@ def nep_metadata():
         if 'Replaces' in tags:
             replaced_nep = int(tags['Replaces'])
             replaced_nep_tags = neps[replaced_nep]
-            if not replaced_nep_tags['Status'] == 'Superseded':
+            if replaced_nep_tags['Status'] != 'Superseded':
                 raise RuntimeError(
                     f'NEP {nr} replaces {replaced_nep}, but that NEP has not '
                     f'been set to Superseded'
