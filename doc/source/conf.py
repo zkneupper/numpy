@@ -441,11 +441,7 @@ def linkcode_resolve(domain, info):
 
         fn = relpath(fn, start=dirname(numpy.__file__))
 
-    if lineno:
-        linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
-    else:
-        linespec = ""
-
+    linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1) if lineno else ""
     if 'dev' in numpy.__version__:
         return "https://github.com/numpy/numpy/blob/main/numpy/%s%s" % (
            fn, linespec)

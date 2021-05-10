@@ -1263,10 +1263,10 @@ def test_iter_op_axes():
     # Reverse the axes
     a = arange(6).reshape(2, 3)
     i = nditer([a, a.T], [], [['readonly']]*2, op_axes=[[0, 1], [1, 0]])
-    assert_(all([x == y for (x, y) in i]))
+    assert_(all(x == y for (x, y) in i))
     a = arange(24).reshape(2, 3, 4)
     i = nditer([a.T, a], [], [['readonly']]*2, op_axes=[[2, 1, 0], None])
-    assert_(all([x == y for (x, y) in i]))
+    assert_(all(x == y for (x, y) in i))
 
     # Broadcast 1D to any dimension
     a = arange(1, 31).reshape(2, 3, 5)
@@ -1755,8 +1755,8 @@ def test_iter_write_buffering():
                    casting='equiv',
                    order='C',
                    buffersize=16)
-    x = 0
     with i:
+        x = 0
         while not i.finished:
             i[0] = x
             x += 1
@@ -2037,11 +2037,9 @@ def test_iter_buffered_cast_subarray():
                     op_dtypes=sdt2)
     with i:
         assert_equal(i[0].dtype, np.dtype(sdt2))
-        count = 0
-        for x in i:
+        for count, x in enumerate(i):
             assert_(np.all(x['a'] == count))
             x['a'][0] += 2
-            count += 1
     assert_equal(a['a'], np.arange(6).reshape(6, 1, 1)+2)
 
     # many -> one element -> back (copies just element 0)
@@ -2054,11 +2052,9 @@ def test_iter_buffered_cast_subarray():
                     op_dtypes=sdt2)
     with i:
         assert_equal(i[0].dtype, np.dtype(sdt2))
-        count = 0
-        for x in i:
+        for count, x in enumerate(i):
             assert_equal(x['a'], count)
             x['a'] += 2
-            count += 1
     assert_equal(a['a'], np.arange(6).reshape(6, 1, 1, 1)*np.ones((1, 3, 2, 2))+2)
 
     # many -> one element -> back (copies just element 0)
@@ -2070,11 +2066,8 @@ def test_iter_buffered_cast_subarray():
                     casting='unsafe',
                     op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
-    count = 0
-    for x in i:
+    for count, x in enumerate(i):
         assert_equal(x['a'], count)
-        count += 1
-
     # many -> one element (copies just element 0)
     sdt1 = [('a', 'O', (3, 2, 2))]
     sdt2 = [('a', 'f4', (1,))]
@@ -2084,11 +2077,8 @@ def test_iter_buffered_cast_subarray():
                     casting='unsafe',
                     op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
-    count = 0
-    for x in i:
+    for count, x in enumerate(i):
         assert_equal(x['a'], count)
-        count += 1
-
     # many -> matching shape (straightforward copy)
     sdt1 = [('a', 'O', (3, 2, 2))]
     sdt2 = [('a', 'f4', (3, 2, 2))]
@@ -2098,11 +2088,8 @@ def test_iter_buffered_cast_subarray():
                     casting='unsafe',
                     op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
-    count = 0
-    for x in i:
+    for count, x in enumerate(i):
         assert_equal(x['a'], a[count]['a'])
-        count += 1
-
     # vector -> smaller vector (truncates)
     sdt1 = [('a', 'f8', (6,))]
     sdt2 = [('a', 'f4', (2,))]
@@ -2112,11 +2099,8 @@ def test_iter_buffered_cast_subarray():
                     casting='unsafe',
                     op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
-    count = 0
-    for x in i:
+    for count, x in enumerate(i):
         assert_equal(x['a'], a[count]['a'][:2])
-        count += 1
-
     # vector -> bigger vector (pads with zeros)
     sdt1 = [('a', 'f8', (2,))]
     sdt2 = [('a', 'f4', (6,))]
@@ -2126,12 +2110,9 @@ def test_iter_buffered_cast_subarray():
                     casting='unsafe',
                     op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
-    count = 0
-    for x in i:
+    for count, x in enumerate(i):
         assert_equal(x['a'][:2], a[count]['a'])
         assert_equal(x['a'][2:], [0, 0, 0, 0])
-        count += 1
-
     # vector -> matrix (broadcasts)
     sdt1 = [('a', 'f8', (2,))]
     sdt2 = [('a', 'f4', (2, 2))]
@@ -2141,12 +2122,9 @@ def test_iter_buffered_cast_subarray():
                     casting='unsafe',
                     op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
-    count = 0
-    for x in i:
+    for count, x in enumerate(i):
         assert_equal(x['a'][0], a[count]['a'])
         assert_equal(x['a'][1], a[count]['a'])
-        count += 1
-
     # vector -> matrix (broadcasts and zero-pads)
     sdt1 = [('a', 'f8', (2, 1))]
     sdt2 = [('a', 'f4', (3, 2))]
@@ -2156,13 +2134,10 @@ def test_iter_buffered_cast_subarray():
                     casting='unsafe',
                     op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
-    count = 0
-    for x in i:
+    for count, x in enumerate(i):
         assert_equal(x['a'][:2, 0], a[count]['a'][:, 0])
         assert_equal(x['a'][:2, 1], a[count]['a'][:, 0])
         assert_equal(x['a'][2,:], [0, 0])
-        count += 1
-
     # matrix -> matrix (truncates and zero-pads)
     sdt1 = [('a', 'f8', (2, 3))]
     sdt2 = [('a', 'f4', (3, 2))]
@@ -2172,12 +2147,10 @@ def test_iter_buffered_cast_subarray():
                     casting='unsafe',
                     op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
-    count = 0
-    for x in i:
+    for count, x in enumerate(i):
         assert_equal(x['a'][:2, 0], a[count]['a'][:, 0])
         assert_equal(x['a'][:2, 1], a[count]['a'][:, 1])
         assert_equal(x['a'][2,:], [0, 0])
-        count += 1
 
 def test_iter_buffering_badwriteback():
     # Writing back from a buffer cannot combine elements
@@ -3114,7 +3087,7 @@ def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
 
     it = np.nditer(arr, op_dtypes=[np.dtype(buf_dtype)],
             flags=["buffered", "external_loop", "refs_ok"], casting="unsafe")
-    for step in range(steps):
+    for _ in range(steps):
         # The iteration finishes in 3 steps, the first two are partial
         next(it)
 
@@ -3125,7 +3098,7 @@ def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
     # Repeat the test with `iternext`
     it = np.nditer(arr, op_dtypes=[np.dtype(buf_dtype)],
                    flags=["buffered", "external_loop", "refs_ok"], casting="unsafe")
-    for step in range(steps):
+    for _ in range(steps):
         it.iternext()
 
     del it  # should ensure cleanup

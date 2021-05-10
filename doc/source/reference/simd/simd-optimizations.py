@@ -39,7 +39,7 @@ class FakeCCompilerOpt(CCompilerOpt):
             if ignore_groups and is_group:
                 continue
             implies = self.feature_sorted(self.feature_implies(f))
-            implies = ' '.join([fstyle_implies(f, i) for i in implies])
+            implies = ' '.join(fstyle_implies(f, i) for i in implies)
             rows.append([fstyle(f), implies])
         if rows:
            return self.gen_rst_table(field_names, rows, **kwargs)
@@ -57,8 +57,8 @@ class FakeCCompilerOpt(CCompilerOpt):
             if not gather:
                 continue
             implies = self.feature_sorted(self.feature_implies(f))
-            implies = ' '.join([fstyle_implies(f, i) for i in implies])
-            gather = ' '.join([fstyle_implies(f, i) for i in gather])
+            implies = ' '.join(fstyle_implies(f, i) for i in implies)
+            gather = ' '.join(fstyle_implies(f, i) for i in gather)
             rows.append([fstyle(f), gather, implies])
         if rows:
             return self.gen_rst_table(field_names, rows, **kwargs)

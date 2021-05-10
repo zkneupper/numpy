@@ -26,11 +26,7 @@ class Indexing(Benchmark):
     def setup(self, masked, ndim, size):
         x = np.arange(size**ndim).reshape(ndim * (size,))
 
-        if masked:
-            self.m = np.ma.array(x, mask=x%2 == 0)
-        else:
-            self.m = np.ma.array(x)
-
+        self.m = np.ma.array(x, mask=x%2 == 0) if masked else np.ma.array(x)
         self.idx_scalar = (size//2,) * ndim
         self.idx_0d = (size//2,) * ndim + (Ellipsis,)
         self.idx_1d = (size//2,) * (ndim - 1)

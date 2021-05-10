@@ -40,8 +40,7 @@ def filter_comment(text):
     if text.startswith('UFUNC_API'):
         text = text[9:].strip()
 
-    html = render_html(text)
-    return html
+    return render_html(text)
 
 def process_match(m, cache=None):
     pre, rawtext = m.groups()

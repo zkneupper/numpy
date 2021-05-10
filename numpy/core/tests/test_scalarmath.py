@@ -61,7 +61,7 @@ class TestTypes:
     def test_leak(self):
         # test leak of scalar objects
         # a leak would show up in valgrind as still-reachable of ~2.6MB
-        for i in range(200000):
+        for _ in range(200000):
             np.add(1, 1)
 
 
@@ -207,10 +207,10 @@ class TestModulus:
 
     def test_modulus_basic(self):
         dt = np.typecodes['AllInteger'] + np.typecodes['Float']
+        fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
         for op in [floordiv_and_mod, divmod]:
             for dt1, dt2 in itertools.product(dt, dt):
                 for sg1, sg2 in itertools.product(_signs(dt1), _signs(dt2)):
-                    fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
                     msg = fmt % (op.__name__, dt1, dt2, sg1, sg2)
                     a = np.array(sg1*71, dtype=dt1)[()]
                     b = np.array(sg2*19, dtype=dt2)[()]
@@ -229,7 +229,7 @@ class TestModulus:
         dividend = nlst + [0] + plst
         divisor = nlst + plst
         arg = list(itertools.product(dividend, divisor))
-        tgt = list(divmod(*t) for t in arg)
+        tgt = [divmod(*t) for t in arg]
 
         a, b = np.array(arg, dtype=int).T
         # convert exact integer results from Python to float so that
@@ -251,10 +251,10 @@ class TestModulus:
     def test_float_modulus_roundoff(self):
         # gh-6127
         dt = np.typecodes['Float']
+        fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
         for op in [floordiv_and_mod, divmod]:
             for dt1, dt2 in itertools.product(dt, dt):
                 for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
-                    fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
                     msg = fmt % (op.__name__, dt1, dt2, sg1, sg2)
                     a = np.array(sg1*78*6e-8, dtype=dt1)[()]
                     b = np.array(sg2*6e-8, dtype=dt2)[()]
@@ -332,19 +332,19 @@ class TestComplexDivision:
 
     def test_signed_zeros(self):
         with np.errstate(all="ignore"):
+            # tupled (numerator, denominator, expected)
+            # for testing as expected == numerator/denominator
+            data = (
+                (( 0.0,-1.0), ( 0.0, 1.0), (-1.0,-0.0)),
+                (( 0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
+                (( 0.0,-1.0), (-0.0,-1.0), ( 1.0, 0.0)),
+                (( 0.0,-1.0), (-0.0, 1.0), (-1.0, 0.0)),
+                (( 0.0, 1.0), ( 0.0,-1.0), (-1.0, 0.0)),
+                (( 0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
+                ((-0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
+                ((-0.0, 1.0), ( 0.0,-1.0), (-1.0,-0.0))
+            )
             for t in [np.complex64, np.complex128]:
-                # tupled (numerator, denominator, expected)
-                # for testing as expected == numerator/denominator
-                data = (
-                    (( 0.0,-1.0), ( 0.0, 1.0), (-1.0,-0.0)),
-                    (( 0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
-                    (( 0.0,-1.0), (-0.0,-1.0), ( 1.0, 0.0)),
-                    (( 0.0,-1.0), (-0.0, 1.0), (-1.0, 0.0)),
-                    (( 0.0, 1.0), ( 0.0,-1.0), (-1.0, 0.0)),
-                    (( 0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
-                    ((-0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
-                    ((-0.0, 1.0), ( 0.0,-1.0), (-1.0,-0.0))
-                )
                 for cases in data:
                     n = cases[0]
                     d = cases[1]
@@ -460,8 +460,8 @@ class TestConversion:
     def test_numpy_scalar_relational_operators(self):
         # All integer
         for dt1 in np.typecodes['AllInteger']:
-            assert_(1 > np.array(0, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assert_(not 1 < np.array(0, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assert_(np.array(0, dtype=dt1)[()] < 1, "type %s failed" % (dt1,))
+            assert_(not np.array(0, dtype=dt1)[()] > 1, "type %s failed" % (dt1,))
 
             for dt2 in np.typecodes['AllInteger']:
                 assert_(np.array(1, dtype=dt1)[()] > np.array(0, dtype=dt2)[()],
@@ -471,9 +471,9 @@ class TestConversion:
 
         #Unsigned integers
         for dt1 in 'BHILQP':
-            assert_(-1 < np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assert_(not -1 > np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assert_(-1 != np.array(1, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assert_(np.array(1, dtype=dt1)[()] > -1, "type %s failed" % (dt1,))
+            assert_(not np.array(1, dtype=dt1)[()] < -1, "type %s failed" % (dt1,))
+            assert_(np.array(1, dtype=dt1)[()] != -1, "type %s failed" % (dt1,))
 
             #unsigned vs signed
             for dt2 in 'bhilqp':
@@ -486,9 +486,9 @@ class TestConversion:
 
         #Signed integers and floats
         for dt1 in 'bhlqp' + np.typecodes['Float']:
-            assert_(1 > np.array(-1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assert_(not 1 < np.array(-1, dtype=dt1)[()], "type %s failed" % (dt1,))
-            assert_(-1 == np.array(-1, dtype=dt1)[()], "type %s failed" % (dt1,))
+            assert_(np.array(-1, dtype=dt1)[()] < 1, "type %s failed" % (dt1,))
+            assert_(not np.array(-1, dtype=dt1)[()] > 1, "type %s failed" % (dt1,))
+            assert_(np.array(-1, dtype=dt1)[()] == -1, "type %s failed" % (dt1,))
 
             for dt2 in 'bhlqp' + np.typecodes['Float']:
                 assert_(np.array(1, dtype=dt1)[()] > np.array(-1, dtype=dt2)[()],
@@ -552,7 +552,7 @@ class TestRepr:
             val = constr.view(t)[0]
             val_repr = repr(val)
             val2 = t(eval(val_repr))
-            if not (val2 == 0 and val < 1e-100):
+            if val2 != 0 or val >= 1e-100:
                 assert_equal(val, val2)
 
     def test_float_repr(self):
@@ -633,9 +633,9 @@ class TestNegative:
         assert_raises(TypeError, operator.neg, a)
 
     def test_result(self):
-        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning)
+            types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
             for dt in types:
                 a = np.ones((), dtype=dt)[()]
                 assert_equal(operator.neg(a) + a, 0)
@@ -647,9 +647,9 @@ class TestSubtract:
         assert_raises(TypeError, operator.sub, a, a)
 
     def test_result(self):
-        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning)
+            types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
             for dt in types:
                 a = np.ones((), dtype=dt)[()]
                 assert_equal(operator.sub(a, a), 0)
@@ -725,10 +725,7 @@ class TestHash:
         for val in [np.pi, np.inf, 3, 6.]:
             numpy_val = scalar(val)
             # Cast back to Python, in case the NumPy scalar has less precision
-            if numpy_val.dtype.kind == 'c':
-                val = complex(numpy_val)
-            else:
-                val = float(numpy_val)
+            val = complex(numpy_val) if numpy_val.dtype.kind == 'c' else float(numpy_val)
             assert val == numpy_val
             print(repr(numpy_val), repr(val))
             assert hash(val) == hash(numpy_val)
@@ -812,8 +809,6 @@ def test_longdouble_inf_loop(op):
 
 @pytest.mark.parametrize("op", reasonable_operators_for_scalars)
 def test_clongdouble_inf_loop(op):
-    if op in {operator.mod} and False:
-        pytest.xfail("The modulo operator is known to be broken")
     try:
         op(np.clongdouble(3), None)
     except TypeError:

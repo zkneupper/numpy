@@ -225,10 +225,11 @@ class LoadtxtCSVDateTime(Benchmark):
         dates = np.arange('today', 20, dtype=np.datetime64)
         np.random.seed(123)
         values = np.random.rand(20)
-        date_line = u''
+        date_line = u''.join(
+            (str(date) + ',' + str(value) + '\n')
+            for date, value in zip(dates, values)
+        )
 
-        for date, value in zip(dates, values):
-            date_line += (str(date) + ',' + str(value) + '\n')
 
         # expand data to specified number of lines
         data = date_line * (num_lines // 20)
